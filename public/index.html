@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Holger Martens – Website‑Bot (Proxy)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; }
+    #log { border:1px solid #ddd; border-radius:10px; padding:12px; height:320px; overflow:auto; }
+    form { display:flex; gap:8px; margin-top:12px; }
+    input { flex:1; padding:.6rem; border:1px solid #ccc; border-radius:8px; }
+    button { padding:.6rem 1rem; border:1px solid #222; border-radius:8px; background:#fff; cursor:pointer; }
+    .user { margin:6px 0; }
+    .bot { margin:6px 0; background:#f9f9f9; padding:8px; border-radius:8px; }
+  </style>
+</head>
+<body>
+  <h1>Holger‑Martens Bot (Website‑Widget)</h1>
+  <div id="log"></div>
+  <form id="f">
+    <input id="q" placeholder="Frage an Holger … / Ask Holger …" autocomplete="off">
+    <button type="submit">Senden</button>
+  </form>
+
+  <script>
+    const log = document.getElementById('log');
+    const form = document.getElementById('f');
+    const q = document.getElementById('q');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = q.value.trim();
+      if(!text) return;
+      log.innerHTML += `<div class="user"><b>Du:</b> ${text}</div>`;
+      q.value = "";
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+      });
+      const { reply, error, details } = await r.json();
+      if (error) {
+        log.innerHTML += `<div class="bot"><b>Fehler:</b> ${error}<br>${details || ""}</div>`;
+      } else {
+        log.innerHTML += `<div class="bot"><b>Bot:</b> ${reply}</div>`;
+      }
+      log.scrollTop = log.scrollHeight;
+    });
+  </script>
+</body>
+</html>
