@@ -7,8 +7,8 @@ const SITE = "https://www.holger-martens.com";
 const LINKS = {
   home: `${SITE}/`,
   kontakt: `${SITE}/kontakt`,
-  ueber: `${SITE}/ueber-mich`,
-  portfolio: `${SITE}/portfolio`,
+  ueber: `${SITE}/fotograf-warnemuende`,
+  portfolio: `${SITE}/rostock-fotograf`,
   bildkunst: `${SITE}/fotokunst`,
   ausstellungen: `${SITE}/ausstellungen`,
   aktuelles: `${SITE}/aktuelles`,
