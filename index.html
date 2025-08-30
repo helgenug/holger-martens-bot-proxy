@@ -1,51 +1,76 @@
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Holger Martens – Website‑Bot (Proxy)</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Holger-Martens Bot</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 24px; }
-    #log { border:1px solid #ddd; border-radius:10px; padding:12px; height:320px; overflow:auto; }
-    form { display:flex; gap:8px; margin-top:12px; }
-    input { flex:1; padding:.6rem; border:1px solid #ccc; border-radius:8px; }
-    button { padding:.6rem 1rem; border:1px solid #222; border-radius:8px; background:#fff; cursor:pointer; }
-    .user { margin:6px 0; }
-    .bot { margin:6px 0; background:#f9f9f9; padding:8px; border-radius:8px; }
+    :root { --bg:#ffffff; --fg:#111; --muted:#6b7280; --border:#e5e7eb; }
+    *{box-sizing:border-box} body{margin:0;font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+    .wrap{height:100vh;display:flex;flex-direction:column}
+    .head{height:44px;background:#111;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 12px}
+    .head b{font-size:14px}
+    .chat{flex:1;overflow:auto;padding:12px}
+    .bubble{max-width:92%;margin:6px 0;padding:10px;border:1px solid var(--border);border-radius:10px}
+    .me{margin-left:auto;background:#f3f4f6}
+    .bot{background:#fafafa}
+    form{display:flex;gap:8px;border-top:1px solid var(--border);padding:10px}
+    input{flex:1;padding:.7rem;border:1px solid var(--border);border-radius:10px}
+    button{padding:.7rem 1rem;border:1px solid #111;background:#111;color:#fff;border-radius:10px;cursor:pointer}
+    .muted{color:var(--muted);font-size:12px}
+    a { color: #0055aa; text-decoration: underline; }
   </style>
 </head>
 <body>
-  <h1>Holger‑Martens Bot (Website‑Widget)</h1>
-  <div id="log"></div>
-  <form id="f">
-    <input id="q" placeholder="Frage an Holger … / Ask Holger …" autocomplete="off">
-    <button type="submit">Senden</button>
-  </form>
+  <div class="wrap">
+    <div class="head"><b>Holger-Martens Bot</b><span class="muted">Website-Chat</span></div>
+    <div id="log" class="chat">
+      <div class="bubble bot">Hallo! Frag mich zu Fotografie & Bildkunst. Ich antworte in der Sprache deiner Frage.</div>
+    </div>
+    <form id="f">
+      <input id="q" placeholder="Frage eingeben … / Ask anything …" autocomplete="off" />
+      <button type="submit">Senden</button>
+    </form>
+  </div>
 
   <script>
     const log = document.getElementById('log');
     const form = document.getElementById('f');
     const q = document.getElementById('q');
 
-    form.addEventListener('submit', async (e) => {
+    // Markdown → HTML Konvertierung für Links
+    function mdToHtml(text) {
+      return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+    }
+
+    function add(text, cls){
+      const div = document.createElement('div');
+      div.className = 'bubble ' + cls;
+      div.innerHTML = mdToHtml(text); // statt textContent
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       const text = q.value.trim();
       if(!text) return;
-      log.innerHTML += `<div class="user"><b>Du:</b> ${text}</div>`;
-      q.value = "";
-      const r = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text })
-      });
-      const { reply, error, details } = await r.json();
-      if (error) {
-        log.innerHTML += `<div class="bot"><b>Fehler:</b> ${error}<br>${details || ""}</div>`;
-      } else {
-        log.innerHTML += `<div class="bot"><b>Bot:</b> ${reply}</div>`;
+      add(text, 'me');
+      q.value = '';
+      try{
+        const r = await fetch('/api/chat', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ message: text })
+        });
+        const data = await r.json();
+        if(data?.reply) add(data.reply, 'bot');
+        else add('Fehler: ' + (data?.error || 'unbekannt'), 'bot');
+      }catch(err){
+        add('Netzwerkfehler: ' + err.message, 'bot');
       }
-      log.scrollTop = log.scrollHeight;
     });
   </script>
 </body>
 </html>
+
